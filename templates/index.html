@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="jumbotron">
+    <p>welcome to puppy user name check</p>
+
+    <p>Lets see if your user name is secure.</p>
+
+    <p>fill out a form below with a user name that works within these constraints</p>
+
+    <ul>
+        <li>must have an upper case letter</li>
+        <li>must have a lower case letter</li>
+        <li>must have a number at the end of the user name</li>
+    </ul>
+
+    <form action="{{ url_for('report') }} ">
+        <label for="username">username:</label>
+        <input type="text" name="username">
+        <input type="submit" value="submit form">
+    </form>
+</div>
+
+
+{% endblock %}
