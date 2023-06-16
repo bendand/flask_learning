@@ -3,7 +3,6 @@ from forms import AddForm, DelForm, AddOwnerForm
 from flask import Flask, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
 app = Flask(__name__)
 # Key for Forms
 app.config['SECRET_KEY'] = 'mysecretkey'
@@ -125,4 +124,3 @@ def del_pup():
 
 if __name__ == '__main__':
     app.run(debug=True)
-added a line at the top to adoption_site.py
