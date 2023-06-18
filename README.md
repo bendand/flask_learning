@@ -6,3 +6,4 @@ to run app:
 * $ python <mainfile.py> 
 
 # main dir change
+# mistake dir change
