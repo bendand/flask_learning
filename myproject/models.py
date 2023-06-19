@@ -1,13 +1,14 @@
-from myproject import db
+from large_app_project import db
+
 
 class Puppy(db.Model):
 
     __tablename__ = 'puppies'
-    id = db.Column(db.Integer,primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text)
-    owner = db.relationship('Owner',backref='puppy',uselist=False)
+    owner = db.relationship('Owner', backref='puppy', uselist=False)
 
-    def __init__(self,name):
+    def __init__(self, name):
         self.name = name
 
     def __repr__(self):
@@ -16,16 +17,17 @@ class Puppy(db.Model):
         else:
             return f"Puppy name is {self.name} and has no owner assigned yet."
 
+
 class Owner(db.Model):
 
     __tablename__ = 'owners'
 
-    id = db.Column(db.Integer,primary_key= True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text)
     # We use puppies.id because __tablename__='puppies'
-    puppy_id = db.Column(db.Integer,db.ForeignKey('puppies.id'))
+    puppy_id = db.Column(db.Integer, db.ForeignKey('puppies.id'))
 
-    def __init__(self,name,puppy_id):
+    def __init__(self, name, puppy_id):
         self.name = name
         self.puppy_id = puppy_id
 
