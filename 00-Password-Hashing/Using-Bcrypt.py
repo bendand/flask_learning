@@ -1,4 +1,4 @@
-#pip install flask-bcrypt
+# pip install flask-bcrypt
 from flask_bcrypt import Bcrypt
 
 # Create the Hasher
