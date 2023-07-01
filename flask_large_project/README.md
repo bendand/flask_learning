@@ -5,7 +5,30 @@ What commands do I need to set up my environment?
 What commands do I need to install my requirements?
 What commands do I need to run the application?
 
+Anaconda Download Instructions
+If Anaconda is already installed, skip this first part.
 
-To create the environment with the proper python version:
+Go to this link and download the Anaconda version made specifically for your operating system.
+https://www.anaconda.com/download/
+
+
+(Assuming anaconda is downloaded)
+To create the environment with the appropriate python version:
 
 $ conda create -n myenv python=3.6.13
+
+
+Environment activation is required next.
+
+$ conda activate myenv
+
+
+You'll then need to install all the extensions in the requirements.txt file located under the flask_large_project directory. To do this, make sure you're in the flask_large_project directory, click on requirements.txt, download the raw file, and then use your terminal to route into your downloads folder. Then, do the following.
+
+$ pip install -r requirements.txt
+
+If all downloads properly, open and interactive shell and run...
+
+>>> import flask
+
+If that command returns no ModuleNotFoundError, then you have successfully installed flask.
