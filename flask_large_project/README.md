@@ -12,6 +12,8 @@ To create the environment with the appropriate python version:
 
 $ conda create -n myenv python=3.6.13
 
+When asked: Proceed ([y]/n)? -- type 'y'
+
 
 Environment activation is required next.
 
@@ -27,3 +29,7 @@ If all downloads properly, open and interactive shell and run...
 >>> import flask
 
 If that command returns no ModuleNotFoundError, then you have successfully installed flask.
+
+To run app.py script..
+
+$ python app.py
