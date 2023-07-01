@@ -1,9 +1,4 @@
-TO-DOS:
-Create a new environment to check...
-
-What commands do I need to set up my environment?
-What commands do I need to install my requirements?
-What commands do I need to run the application?
+Instructions too set up environment for running app.py file...
 
 Anaconda Download Instructions
 If Anaconda is already installed, skip this first part.
