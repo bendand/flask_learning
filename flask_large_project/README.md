@@ -37,20 +37,17 @@ $ python app.py
 
 ##### NOTES ABOUT DATABASES #####
 
-
-Things to note about initializing the database:
-
 $ flask db init 
 
 this initializes the database as well as creates a migrations file in the directory where the database is initialized
 
-If/When you get this when running the above command --  "Please edit configuration/connection/logging settings in '/Users/benanderson/repos/flask_learning/migrations/alembic.ini' before proceeding." --- just go ahead with the next steps...
-
-
-And run:
+And then run:
 
 $ flask db migrate -m "<note about migration>"
 
-And then when/if you encounter this:
+Then:
 
-alembic.util.exc.CommandError: Can't locate revision identified by '37b7351e06a1'
+$ flask db upgrade
+
+If you aren't able to execute these commands error-free, something is likely wrong either with your models.py or __init__.py scripts.
+
