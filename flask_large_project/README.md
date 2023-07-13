@@ -49,5 +49,5 @@ Then:
 
 $ flask db upgrade
 
-If you aren't able to execute these commands error-free, something is likely wrong either with your models.py or __init__.py scripts.
+If you aren't able to execute these commands error-free, something is likely wrong either with your models.py or __init__.py scripts
 
