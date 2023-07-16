@@ -40,10 +40,12 @@ class UpdateUserForm(FlaskForm):
                         FileAllowed(['jpg', 'png '])])
     submit = SubmitField('Update')
 
-    def check_email(self, field):
-        if User.query.filter_by(email=field.data).first():
-            raise ValidationError('Your email has been registered already!')
+    def check_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user and user != current_user:
+            raise ValidationError('A user with that email already exists.')
 
-    def check_username(self, field):
-        if User.query.filter_by(username=field.data).first():
-            raise ValidationError('Your username has been registered already!')
+    def check_username(self, username):
+        user = User.query.filter_by(username=username.data).first()
+        if user and user != current_user:
+            raise ValidationError('This username is taken')
