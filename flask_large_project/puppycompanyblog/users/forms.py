@@ -37,7 +37,7 @@ class UpdateUserForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     username = StringField('Username', validators=[DataRequired()])
     picture = FileField('Update Profile Picture', validators=[
-                        FileAllowed(['jpg', 'png '])])
+                        FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
     def check_email(self, email):
