@@ -87,3 +87,28 @@ class RecipeToIngredient(db.Model):
 #     recipe_name = db.Column(db.String(100), db.ForeignKey('recipes.name'))
 #     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
 #     recipe_name = db.Column(db.String(100), db.ForeignKey('recipes.name'))
+
+
+
+# users = db.Table(
+#     "users",
+#     db.Column("id", db.ForeignKey('users.id')),
+#     db.Column("email", db.ForeignKey('users.email')),
+#     db.Column("username", db.ForeignKey('users.username')),
+# )
+
+
+# ingredients = db.Table(
+#     "ingredients",
+#     db.Column("id", db.ForeignKey('ingredients.id')),
+#     db.Column("name", db.ForeignKey('ingredients.name')),
+# )
+
+
+
+# recipes = db.Table(
+#     "recipes",
+#     db.Column("id", db.ForeignKey('recipes.id')),
+#     db.Column("name", db.ForeignKey('recipes.name')),
+#     db.Column("user_id", db.ForeignKey('recipes.user_id')),
+# )
