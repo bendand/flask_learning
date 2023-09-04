@@ -1,10 +1,11 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo
 from wtforms import ValidationError
 ## user based imports 
 from flask_login import current_user
 from crud_recipe.models import User
+from pint import UnitRegistry
 
 
 class LoginForm(FlaskForm):
@@ -48,10 +49,19 @@ class UpdateUserForm(FlaskForm):
             raise ValidationError('This username is taken')
 
 
-class ShoppingListForm(FlaskForm):
+class CreateShoppingListForm(FlaskForm):
+
+    name = StringField('What is the name of your recipe?', validators=[DataRequired()])
+
+
+
+class AddIngredientForm(FlaskForm):
+
+    measurement_choices = ['cup', 'teaspoon', 'tablespoon', 'count', 'pint']
 
     ingredient = StringField('Ingredient', validators=[DataRequired()])
     quantity = IntegerField('Insert a numeric quantity', validators=[DataRequired()])
-    measurement = StringField('Unit of Measurement', validators=[DataRequired()])
+    measurement = SelectField('Unit of Measurement', choices=measurement_choices, validators=[DataRequired()])
     enter_ingredient = SubmitField('Enter Ingredient')
-    submit = SubmitField('Generate my Shopping List')
+
+

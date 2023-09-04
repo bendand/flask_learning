@@ -19,15 +19,13 @@
       <ul class="navbar-nav mr-auto">
         <!-- add if statement in here with currentuser -->
         {% if current_user.is_authenticated %}
-        <li class="nav-link"><a href="{{ url_for('core.index') }}">Home</a></li>
         <li class="nav-link"><a href="{{ url_for('core.info') }}">About</a></li>
         <li class="nav-link"><a href="{{url_for('users.logout')}}">Log Out</a></li>
         <li class="nav-link"><a href="{{url_for('users.account')}}">Account</a></li>
-        <li class="nav-link"><a href="{{url_for('users.generate_list')}}">Shopping List Generator</a></li>
+        <li class="nav-link"><a href="{{url_for('users.create_list')}}">Shopping List Generator</a></li>
         {% else %}
         <li class="nav-link"><a href="{{url_for('users.login')}}">Log In</a></li>
         <li class="nav-link"><a href="{{url_for('users.register')}}">Register</a></li>
-        <li class="nav-link"><a href="{{ url_for('core.index') }}">Home</a></li>
         <li class="nav-link"><a href="{{ url_for('core.info') }}">About</a></li>
         {% endif %}
       </ul>

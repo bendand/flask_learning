@@ -1,5 +1,6 @@
 from crud_recipe import db,login_manager
 from werkzeug.security import generate_password_hash,check_password_hash
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField
 from flask_login import UserMixin
 from datetime import datetime
 
@@ -18,7 +19,6 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
 
-    lists = db.relationship('ShoppingList', backref='creator', lazy=True)
 
     def __init__(self, email, username, password):
         self.email = email
@@ -33,21 +33,57 @@ class User(db.Model, UserMixin):
         return f"UserName: {self.username}"
 
 
-class ShoppingList(db.Model):
-    
-    users = db.relationship(User)
+
+class Ingredient(db.Model):
+
+    __tablename__ = 'ingredients'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)     ## are any validators/conditionals required here or are none needed?
 
-    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    title = db.Column(db.String(140), nullable=False)
-    text = db.Column(db.Text, nullable=False)
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
 
-    def __init__(self, title, text, user_id):
-        self.title = title
-        self.text = text
+    def __repr__(self):    ## is the __repr__ function used for getting the data in the right form to be passed through functions?
+        return f"id: {self.id} --- name: {self.name}"
+
+
+class Recipe(db.Model):
+
+    __tablename__ = 'recipes'
+
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(100))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    def __init__(self, id, name, user_id):
+        self.id = id
+        self.name = name
         self.user_id = user_id
 
     def __repr__(self):
-        return f"Post ID: {self.id}"
+        return f"id: {self.id} --- name: {self.name} --- user id: {self.user_id}"
+
+
+class RecipeToIngredient(db.Model):      
+
+    __tablename__ = 'recipe_to_ingredient'
+
+
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), primary_key=True)
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredients.id'), primary_key=True)
+    ingredient_quantity = db.Column(db.Integer)
+    ingredient_measurement = db.Column(db.String(50))
+
+
+
+# class RecipeToRecipe(db.Model):
+
+#     __tablename__ = 'recipe_to_recipe'
+
+#     id = db.Column(db.ForeignKey('recipes.id', 'recipes.id'), primary_key=True)
+#     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
+#     recipe_name = db.Column(db.String(100), db.ForeignKey('recipes.name'))
+#     recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
+#     recipe_name = db.Column(db.String(100), db.ForeignKey('recipes.name'))
