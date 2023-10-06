@@ -3,6 +3,8 @@ from werkzeug.security import generate_password_hash,check_password_hash
 from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField
 from flask_login import UserMixin
 from datetime import datetime
+from dataclasses import dataclass
+from flask.json import jsonify
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -33,13 +35,13 @@ class User(db.Model, UserMixin):
         return f"UserName: {self.username}"
 
 
-
+@dataclass
 class Ingredient(db.Model):
 
     __tablename__ = 'ingredients'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)     ## are any validators/conditionals required here or are none needed?
+    id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True, unique=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)     ## are any validators/conditionals required here or are none needed?
 
     def __init__(self, id, name):
         self.id = id
@@ -48,12 +50,18 @@ class Ingredient(db.Model):
     def __repr__(self):    ## is the __repr__ function used for getting the data in the right form to be passed through functions?
         return f"id: {self.id} --- name: {self.name}"
 
+    
+    def to_dict(self):
+        return {"id": self.id,
+                "name": self.name}
 
+
+@dataclass
 class Recipe(db.Model):
 
     __tablename__ = 'recipes'
 
-    id = db.Column(db.Integer(), primary_key=True)
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     name = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
@@ -64,6 +72,11 @@ class Recipe(db.Model):
 
     def __repr__(self):
         return f"id: {self.id} --- name: {self.name} --- user id: {self.user_id}"
+
+    def to_dict(self):
+        return {"id": self.id,
+                "name": self.name,
+                "user id": self.user_id}
 
 
 class RecipeToIngredient(db.Model):      

@@ -4,6 +4,8 @@ from crud_recipe import db
 from werkzeug.security import generate_password_hash,check_password_hash
 from crud_recipe.models import User, Ingredient, Recipe
 from crud_recipe.users.forms import RegistrationForm, LoginForm, UpdateUserForm, CreateShoppingListForm, AddIngredientForm
+from flask.json import jsonify
+
 
 
 users = Blueprint('users', __name__)
@@ -69,8 +71,6 @@ def account():
     form = UpdateUserForm()
 
     if form.validate_on_submit():
-        if form.picture.data:
-            username = current_user.username
 
         current_user.username = form.username.data
         current_user.email = form.email.data
@@ -82,41 +82,78 @@ def account():
         form.username.data = current_user.username
         form.email.data = current_user.email
 
-    return render_template(url_for('account.html', form=form))
+        return render_template('account.html', form=form)
 
 
 @users.route("/generatelist", methods=['GET', 'POST'])
 def create_list():
 
-    ingredient_1 = Ingredient(1, 'garlic clove')
-    db.session.add(ingredient_1)
+    ## here im trying to ask for a recipe name to store all the ingredients and their measurements/quantities under
+    ## then i want to redirect to a different form to ask prompt the user to input the ingredients and their msmts
+    ## im going to have to work out how to add this recipe in its correct form to my database and have all my 
+    ## dependencies and backreferences line up 
 
-    ingredient_2 = Ingredient(2, 'sugar')
-    db.session.add(ingredient_2)
+    ## how to prevent circular redirection errors? 
 
-    ingredient_3 = Ingredient(3, 'salt')
-    db.session.add(ingredient_3)
+    create_form = CreateShoppingListForm()
 
-    ingredient_4 = Ingredient(4, 'beans')
-    db.session.add(ingredient_4)
+    ## how do i feature id as being part of this recipe? how to include attributes that are already auto_incremented is tricky
 
-    db.session.commit()
+    if create_form.validate_on_submit():
+        shopping_list = Recipe(name=create_form.name.data,
+                               user_id=current_user.id)
+
+    #     ## ^ is this the right syntax? since recipes.id is auto-incremented it doesn't need to be declared right?
+
+        db.session.add(shopping_list)
+        db.session.commit()
+        flash('Recipe Added!')
+
+        ## where do i go from here? Just go straight to the next form? 
+
+        ## where is the other info like quantity and measurement stored in the data tables? Should they just be featured 
+        ## in my recipes table that lists ingredients in the tables?
+
+        ingredient_form = AddIngredientForm()
+
+        if ingredient_form.validate_on_submit:
+            ingredient = Ingredient()
+
+        # form = AddIngredientForm()
+
+        # if form.validate_on_submit():
+        #     ingredient = Ingredient(id=form.id.data, 
+        #                             name=form.name.data)
+
+        #     db.session.add(ingredient)
+        #     db.session.commit()
+        #     flash('Ingredient Added')
+        #     return redirect(url_for('users.create_list'))
+
+    return render_template('create_shopping_list.html', form=create_form)
+
+
+    # query = db.session.query(Ingredient).all()
+    
+    # presentable = [ingredient.to_dict() for ingredient in query]
+
+    # jsonified = jsonify(presentable)
+
+    # return jsonified
+
+    
+@users.route("/viewlist", methods=['GET'])
+def view_list():
 
     query = db.session.query(Ingredient).all()
-
-    print(query)
-    return query
-
     
+    presentable = [ingredient.to_dict() for ingredient in query]
 
-    # db.session.commit()
+    jsonified = jsonify(presentable)
 
-    # the_query = db.session.query(Ingredient).all()
+    return jsonified
 
-    # return the_query
-    
 
-    # ingredient_list = []
 
     # form = CreateShoppingListForm()
 
