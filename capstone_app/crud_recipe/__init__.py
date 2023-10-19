@@ -54,7 +54,7 @@ app.register_blueprint(error_pages)
 
 ureg = UnitRegistry()
 
-def add_ingredients(recipe):
+def recipe_processor(recipe):
     ureg = UnitRegistry()
     ingr_dict = {}
     for ingredient in recipe:

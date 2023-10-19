@@ -1,10 +1,23 @@
 from flask import render_template, url_for, flash, redirect, request, Blueprint
 from flask_login import login_user, current_user, logout_user, login_required
 from crud_recipe import db
+from crud_recipe.mockup_function import recipe_processor
 from werkzeug.security import generate_password_hash,check_password_hash
-from crud_recipe.models import User, Ingredient, Recipe
-from crud_recipe.users.forms import RegistrationForm, LoginForm, UpdateUserForm, CreateShoppingListForm, AddIngredientForm
+from crud_recipe.models import User, Ingredient, Recipe, RecipeToIngredient
+from crud_recipe.users.forms import RegistrationForm, LoginForm, UpdateUserForm, AddIngredientsForm
 from flask.json import jsonify
+
+import pint
+from simple_test import test
+from pint import UnitRegistry
+from pint.errors import UndefinedUnitError
+
+## to discuss
+
+# import requests
+
+# r = requests.get("http://google.com")       
+# print(r.status_code)
 
 
 
@@ -88,110 +101,94 @@ def account():
 @users.route("/generatelist", methods=['GET', 'POST'])
 def create_list():
 
-    ## here im trying to ask for a recipe name to store all the ingredients and their measurements/quantities under
-    ## then i want to redirect to a different form to ask prompt the user to input the ingredients and their msmts
-    ## im going to have to work out how to add this recipe in its correct form to my database and have all my 
-    ## dependencies and backreferences line up 
+    recipe_form = AddIngredientsForm()
 
-    ## how to prevent circular redirection errors? 
+    if recipe_form.validate_on_submit():
 
-    create_form = CreateShoppingListForm()
+        recipe_name = recipe_form.recipe_name
 
-    ## how do i feature id as being part of this recipe? how to include attributes that are already auto_incremented is tricky
+        # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
+        recipe_data = recipe_form.enter_ingredients.data.splitlines()
 
-    if create_form.validate_on_submit():
-        shopping_list = Recipe(name=create_form.name.data,
-                               user_id=current_user.id)
+        # splits into 3 items per line, no whitespace, with a comma separating each value
+        recipe_items = [item.split(', ') for item in recipe_data]
 
-    #     ## ^ is this the right syntax? since recipes.id is auto-incremented it doesn't need to be declared right?
+        # converts each item in the list into a tuple
+        new_recipe_items = [tuple(item) for item in recipe_items]
 
-        db.session.add(shopping_list)
-        db.session.commit()
-        flash('Recipe Added!')
+        for item in new_recipe_items:
 
-        ## where do i go from here? Just go straight to the next form? 
+            # creates an in_database variable with a name or a 'None' value
+            in_database = Ingredient.query.filter_by(name=item[0]).first()
 
-        ## where is the other info like quantity and measurement stored in the data tables? Should they just be featured 
-        ## in my recipes table that lists ingredients in the tables?
+            # if the ingredient name is not in the ingredient table...
+            if in_database == None:
 
-        ingredient_form = AddIngredientForm()
+                # save the ingredient to the ingredient table
+                ingredient = Ingredient(name=item[0])
 
-        if ingredient_form.validate_on_submit:
-            ingredient = Ingredient()
+                # then save the ingredient as a record in the recipe to ingredient table
+                recipe_to_ingredient = RecipeToIngredient(ingredient_quantity=int(item[1]), ingredient_measurement=item[2])
 
-        # form = AddIngredientForm()
+                # commit both
+                # db.session.add(ingredient, recipe_to_ingredient)
+                # db.session.commit()
 
-        # if form.validate_on_submit():
-        #     ingredient = Ingredient(id=form.id.data, 
-        #                             name=form.name.data)
+            # if the ingredient name is already in the ingredient table...
+            else:
 
-        #     db.session.add(ingredient)
-        #     db.session.commit()
-        #     flash('Ingredient Added')
-        #     return redirect(url_for('users.create_list'))
+                # just save the ingredient as a record in the recipe to ingredient table
+                recipe_to_ingredient = RecipeToIngredient(ingredient_quantity=int(item[1]), ingredient_measurement=item[2])
 
-    return render_template('create_shopping_list.html', form=create_form)
+                # then commit both
+                # db.session.add(recipe_to_ingredient)
+                # db.session.commit()
 
 
-    # query = db.session.query(Ingredient).all()
+            # should i flash a two-button form that asks the user if they want to either enter 
+            return redirect(url_for('users.view_users_recipes', username=current_user.username))
+
+
+    return render_template('create_shopping_list.html', form=recipe_form)
+
+
+
+
     
-    # presentable = [ingredient.to_dict() for ingredient in query]
+# @users.route("/viewlist", methods=['GET'])
+# def view_list():
 
-    # jsonified = jsonify(presentable)
-
-    # return jsonified
-
+#     query = db.session.query(Ingredient).all()
     
-@users.route("/viewlist", methods=['GET'])
-def view_list():
+#     presentable = [ingredient.to_dict() for ingredient in query]
 
-    query = db.session.query(Ingredient).all()
-    
-    presentable = [ingredient.to_dict() for ingredient in query]
+#     jsonified = jsonify(presentable)
 
-    jsonified = jsonify(presentable)
-
-    return jsonified
-
-
-
-    # form = CreateShoppingListForm()
-
-    # if form.validate_on_submit():
-    #     recipe = Recipe(name=form.name.data)
-    #     return redirect(url_for('users.add_ingredients'))
-
-    # return render_template('generate_list.html')
+#     return jsonified
 
 '''is a view shopping lists view necessary? whats this supposed to look like? 
 should a person be able to make multiple lists and view them from the view_shopping_lists view?  '''
 
-@users.route("/addingredients", methods=['GET,' 'POST'])
-def add_ingredients():
-    pass
 
-    # form = AddIngredientForm
+@users.route("/<username>")
+def view_users_recipes(username):
+    ## this should list each post with a date and a recipe title and show a date timestamp ##
+    user = User.query.filter_by(username=username).first_or_404()
+    recipes = Recipe.query.filter_by(creator=user).order_by(Recipe.date.desc())
 
-    # if form.validate_on_submit():
-    #     ingredient = Ingredient(name=form.name.data)
-
-    #     db.session.add(ingredient)
-    #     db.session.commit()
-    #     flash('Ingredient Added')
-    #     return redirect(url_for('users.account'))
-
-
-
-
-@users.route("/shoppinglists", methods=['GET'])
-def view_shopping_lists():
-    ## this should list each post with a date and a recipe title and show a date timestamp ## 
-    pass
+    return render_template('users_recipes.html', recipes=recipes,  user=user)
 
 
 
 
 
+# query = db.session.query(Ingredient).all()
+    
+#     presentable = [ingredient.to_dict() for ingredient in query]
+
+#     jsonified = jsonify(presentable)
+
+#     return jsonified
 
 
 

@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 
-<form class="form-group" method="POST">
+<form method="POST">
 
-  {{ form.hidden_tag() }}
-
-  <div class="form-group">
-      {{form.name.label}} {{form.name}}
-  </div>
-
+  {{form.hidden_tag()}}
+  {{form.recipe_name.label}}{{form.recipe_name}} <br>
+  {{form.enter_ingredients.label}}{{form.enter_ingredients}} <br>
+  {{form.enter_list()}}
 
 </form>
 

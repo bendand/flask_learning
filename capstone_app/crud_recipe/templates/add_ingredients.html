@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- 
+trying to pass in the recipe name to the header of the add ingredients form -->
+<div class="jumbotron">
+    <div align="center">
+        <h1>Adding ingredients for {{recipe_name}}</h1>
+    </div>
+</div>
+
+<form class="form-group" method="POST">
+
+    {{form.hidden_tag()}}
+    {{form.name.label}}{{form.name}} <br>
+    {{form.quantity.label}}{{form.quantity}} <br>
+    {{form.measurement.label}}{{form.measurement}} <br>
+    {{form.enter_ingredient.label}}{{form.enter_ingredient}} 
+    {{form.enter_list.label}}{{form.enter_list}}
+
+</form>
+
+
+{% endblock content %}
