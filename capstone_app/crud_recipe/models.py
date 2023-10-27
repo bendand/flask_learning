@@ -11,6 +11,7 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 
+
 class User(db.Model, UserMixin):
 
     # Create a table in the db
@@ -20,9 +21,6 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
-
-    recipes = db.relationship('Recipe', backref='creator', lazy=True)
-
 
 
     def __init__(self, email, username, password):
@@ -61,9 +59,6 @@ class Ingredient(db.Model):
 @dataclass
 class Recipe(db.Model):
 
-    # is this necessary? 
-    users = db.relationship(User)
-
     ## does recipes need a table? blogpost model in puppycompanyblog does not have one
     __tablename__ = 'recipes'
 
@@ -71,6 +66,7 @@ class Recipe(db.Model):
     name = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
 
 
     def __init__(self, name, user_id, date):
@@ -116,53 +112,4 @@ class RecipeToIngredient(db.Model):
 
 
 
-class RecipeToRecipe(db.Model):
 
-    __tablename__ = 'recipe_to_recipe'
-
-    id = db.Column(db.ForeignKey('recipes.id', 'recipes.id'), primary_key=True)
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'))
-    recipe_name = db.Column(db.String(100), db.ForeignKey('recipes.name'))
-
-
-    def __init__(self, recipe_id, recipe_name):
-        self.recipe_id = recipe_id
-        self.recipe_name = recipe_name
-
-
-    def __repr__(self):
-        return f"recipe id: {self.recipe_id} --- recipe name: {self.recipe_name}"
-
-
-    def to_dict(self):
-        return {"recipe id": self.recipe_id,
-                "ingredient id": self.ingredient_id,
-                "ingredient_quantity": self.ingredient_quantity,
-                "ingredient_measurement": self.ingredient_measurement}
-
-
-
-
-
-# users = db.Table(
-#     "users",
-#     db.Column("id", db.ForeignKey('users.id')),
-#     db.Column("email", db.ForeignKey('users.email')),
-#     db.Column("username", db.ForeignKey('users.username')),
-# )
-
-
-# ingredients = db.Table(
-#     "ingredients",
-#     db.Column("id", db.ForeignKey('ingredients.id')),
-#     db.Column("name", db.ForeignKey('ingredients.name')),
-# )
-
-
-
-# recipes = db.Table(
-#     "recipes",
-#     db.Column("id", db.ForeignKey('recipes.id')),
-#     db.Column("name", db.ForeignKey('recipes.name')),
-#     db.Column("user_id", db.ForeignKey('recipes.user_id')),
-# )

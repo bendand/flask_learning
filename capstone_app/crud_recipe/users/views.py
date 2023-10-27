@@ -4,7 +4,7 @@ from crud_recipe import db
 from crud_recipe.mockup_function import recipe_processor
 from werkzeug.security import generate_password_hash,check_password_hash
 from crud_recipe.models import User, Ingredient, Recipe, RecipeToIngredient
-from crud_recipe.users.forms import RegistrationForm, LoginForm, UpdateUserForm, AddIngredientsForm
+from crud_recipe.users.forms import RegistrationForm, LoginForm, UpdateUserForm
 from flask.json import jsonify
 
 import pint
@@ -98,60 +98,6 @@ def account():
         return render_template('account.html', form=form)
 
 
-@users.route("/generatelist", methods=['GET', 'POST'])
-def create_list():
-
-    recipe_form = AddIngredientsForm()
-
-    if recipe_form.validate_on_submit():
-
-        recipe_name = recipe_form.recipe_name
-
-        # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
-        recipe_data = recipe_form.enter_ingredients.data.splitlines()
-
-        # splits into 3 items per line, no whitespace, with a comma separating each value
-        recipe_items = [item.split(', ') for item in recipe_data]
-
-        # converts each item in the list into a tuple
-        new_recipe_items = [tuple(item) for item in recipe_items]
-
-        for item in new_recipe_items:
-
-            # creates an in_database variable with a name or a 'None' value
-            in_database = Ingredient.query.filter_by(name=item[0]).first()
-
-            # if the ingredient name is not in the ingredient table...
-            if in_database == None:
-
-                # save the ingredient to the ingredient table
-                ingredient = Ingredient(name=item[0])
-
-                # then save the ingredient as a record in the recipe to ingredient table
-                recipe_to_ingredient = RecipeToIngredient(ingredient_quantity=int(item[1]), ingredient_measurement=item[2])
-
-                # commit both
-                # db.session.add(ingredient, recipe_to_ingredient)
-                # db.session.commit()
-
-            # if the ingredient name is already in the ingredient table...
-            else:
-
-                # just save the ingredient as a record in the recipe to ingredient table
-                recipe_to_ingredient = RecipeToIngredient(ingredient_quantity=int(item[1]), ingredient_measurement=item[2])
-
-                # then commit both
-                # db.session.add(recipe_to_ingredient)
-                # db.session.commit()
-
-
-            # should i flash a two-button form that asks the user if they want to either enter 
-            return redirect(url_for('users.view_users_recipes', username=current_user.username))
-
-
-    return render_template('create_shopping_list.html', form=recipe_form)
-
-
 
 
     
@@ -174,9 +120,11 @@ should a person be able to make multiple lists and view them from the view_shopp
 def view_users_recipes(username):
     ## this should list each post with a date and a recipe title and show a date timestamp ##
     user = User.query.filter_by(username=username).first_or_404()
-    recipes = Recipe.query.filter_by(creator=user).order_by(Recipe.date.desc())
+    recipes = db.session.execute(db.Select(Recipe).filter_by(user_id=user.id))
 
-    return render_template('users_recipes.html', recipes=recipes,  user=user)
+    print(recipes)
+
+    return render_template('user_recipes.html', recipes=recipes,  user=user)
 
 
 

@@ -50,16 +50,5 @@ class UpdateUserForm(FlaskForm):
 
 
 
-class AddIngredientsForm(FlaskForm):
-
-    # measurement_choices = ['cup', 'teaspoon', 'tablespoon', 'count', 'pint']
-
-    recipe_name = StringField('Recipe Name', validators=[DataRequired()])
-    enter_ingredients = TextAreaField('Enter the ingredient, the quantity, and the measurement, with each value separated by a comma. Use one line of text for each ingredient. Ex: "rice, 1, cup"', validators=[DataRequired()])
-
-    # quantity = IntegerField('Insert a numeric quantity', validators=[DataRequired()])
-    # measurement = SelectField('Unit of Measurement', choices=measurement_choices, validators=[DataRequired()])
-    # enter_ingredient = SubmitField('Enter Ingredient')
-    enter_list = SubmitField('Submit All Ingredients')
 
 
