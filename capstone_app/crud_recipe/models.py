@@ -17,7 +17,7 @@ class User(db.Model, UserMixin):
     # Create a table in the db
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), unique=True, index=True)
     password_hash = db.Column(db.String(128))
@@ -65,37 +65,37 @@ class Recipe(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    date = db.Column(db.DateTime, default=datetime.utcnow)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-
-
-    def __init__(self, name, user_id, date):
+    def __init__(self, name, user_id):
         self.name = name
         self.user_id = user_id
-        self.date = date
 
     def __repr__(self):
-        return f"id: {self.id} --- name: {self.date} --- user id: {self.name}"
+        return f"id: {self.id} --- name: {self.name} --- user id: {self.date}"
 
     def to_dict(self):
         return {"id": self.id,
-                "name": self.date,
-                "user id": self.name}
+                "name": self.name,
+                "user id": self.date}
 
 
-@dataclass
+#does my recipetoingredient model need this dataclass tag?
+# @dataclass
 class RecipeToIngredient(db.Model):      
 
     __tablename__ = 'recipe_to_ingredient'
 
 
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), primary_key=True)
-    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredients.id'), primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), primary_key=True, nullable=False)
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredients.id'), primary_key=True, nullable=False)
     ingredient_quantity = db.Column(db.Integer)
     ingredient_measurement = db.Column(db.String(50))
 
 
-    def __init__(self, ingredient_quantity, ingredient_measurement):
+    def __init__(self, recipe_id, ingredient_id, ingredient_quantity, ingredient_measurement):
+        self.recipe_id = recipe_id
+        self.ingredient_id = ingredient_id
         self.ingredient_quantity = ingredient_quantity
         self.ingredient_measurement = ingredient_measurement
 

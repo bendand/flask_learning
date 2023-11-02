@@ -3,6 +3,7 @@ from flask_login import current_user,login_required
 from crud_recipe import db
 from crud_recipe.models import Ingredient,Recipe,RecipeToIngredient
 from crud_recipe.recipes.forms import RecipeForm
+import datetime
 
 recipes = Blueprint('recipes',__name__)
 
@@ -15,7 +16,12 @@ def add_recipe():
 
     if recipe_form.validate_on_submit():
 
-        recipe_name = recipe_form.recipe_name
+        recipe_name = recipe_form.recipe_name.data
+
+        new_recipe = Recipe(name=recipe_name, user_id=current_user.username)
+
+        db.session.add(new_recipe)
+        db.session.commit()
 
         # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
         recipe_data = recipe_form.enter_ingredients.data.splitlines()
@@ -28,10 +34,6 @@ def add_recipe():
 
         for item in new_recipe_items:
 
-            print(item)
-
-            # print(item[0], item[1], item[2])
-
             # creates an in_database variable with a name or a 'None' value
             in_database = Ingredient.query.filter_by(name=item[0]).first()
 
@@ -41,27 +43,34 @@ def add_recipe():
                 # save the ingredient to the ingredient table
                 ingredient = Ingredient(name=item[0])
 
-                # then save the ingredient as a record in the recipe to ingredient table
-                recipe_to_ingredient = RecipeToIngredient(ingredient_quantity=int(item[1]), ingredient_measurement=item[2])
-                print(recipe_to_ingredient)
+                db.session.add(ingredient)
+                db.session.commit()
 
-                # commit both
-                db.session.add(ingredient, recipe_to_ingredient)
+                # then save the ingredient as a record in the recipe to ingredient table
+                recipe_to_ingredient = RecipeToIngredient(recipe_id=new_recipe.id,
+                                                          ingredient_id=ingredient.id, 
+                                                          ingredient_quantity=int(item[1]), 
+                                                          ingredient_measurement=item[2])
+
+                db.session.add(recipe_to_ingredient)
                 db.session.commit()
 
             # if the ingredient name is already in the ingredient table...
             else:
 
-                # just save the ingredient as a record in the recipe to ingredient table
-                recipe_to_ingredient = RecipeToIngredient(ingredient_quantity=int(item[1]), ingredient_measurement=item[2])
-                print(recipe_to_ingredient)
+                ingredient = Ingredient.query.filter_by(name=item[0]).first()
 
-                # then commit both
+
+                recipe_to_ingredient = RecipeToIngredient(recipe_id=new_recipe.id, 
+                                                          ingredient_id=ingredient.id,
+                                                          ingredient_quantity=int(item[1]),
+                                                          ingredient_measurement=item[2])
+
                 db.session.add(recipe_to_ingredient)
                 db.session.commit()
 
 
-            # should i flash a two-button form that asks the user if they want to either enter 
+            # should i flash a two-button form that asks the user if they want to either enter another recipe or 'go to my recipes'?
             flash('Recipe added to My Recipes')
             return redirect(url_for('recipes.add_recipe'))
 
