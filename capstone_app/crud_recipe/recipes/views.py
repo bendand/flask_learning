@@ -18,7 +18,7 @@ def add_recipe():
 
         recipe_name = recipe_form.recipe_name.data
 
-        new_recipe = Recipe(name=recipe_name, user_id=current_user.username)
+        new_recipe = Recipe(name=recipe_name, user_id=current_user.id)
 
         db.session.add(new_recipe)
         db.session.commit()
@@ -85,8 +85,10 @@ def add_recipe():
 def recipe(recipe_id):
     # grab the requested recipe by id number or return 404
     recipe = Recipe.query.get_or_404(recipe_id)
+    # need some way below here to make all the ingredients in the recipe given above available for enumeration in html
+    # recipe_ingredients = RecipeToIngredient.query.filter_by(recipe_id=recipe.id)
     return render_template('recipe.html', recipe_name=recipe.name,
-                            submit_date=recipe.date, recipe_id=recipe_id)
+                            submit_date=recipe.date, recipe=recipe)
 
 @recipes.route("/<int:recipe_id>/update", methods=['GET', 'POST'])
 @login_required
@@ -114,7 +116,7 @@ def update(recipe_id):
 
 @recipes.route("/<int:recipe_id>/delete", methods=['POST'])
 @login_required
-def delete_post(recipe_id):
+def delete_recipe(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     if recipe.user_id != current_user.id:
         abort(403)

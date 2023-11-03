@@ -120,9 +120,12 @@ should a person be able to make multiple lists and view them from the view_shopp
 def view_users_recipes(username):
     ## this should list each post with a date and a recipe title and show a date timestamp ##
     user = User.query.filter_by(username=username).first_or_404()
-    recipes = db.session.execute(db.Select(Recipe).filter_by(user_id=user.id))
+    recipes = Recipe.query.filter_by(user_id=user.id).all()
 
-    print(recipes)
+    # print(recipes)
+
+    for recipe in recipes:
+        print(recipe)
 
     return render_template('user_recipes.html', recipes=recipes,  user=user)
 
