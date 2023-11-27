@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Select which recipes you'd like to add to your shopping list...</h2>
+<br>
+<br>
+
+<form action="{{ url_for('users.generate_shopping_list', username=current_user.username) }}" method="post" class="form-example">
+{% for recipe in recipes %}
+    <div>
+        <label for="recipe name"><h3><a href="{{ url_for('recipes.recipe_view', recipe_id=recipe.id) }}">{{ recipe.name }}</a></h3></label>
+        <br>
+        <label for="recipe submit date"><h5> Submitted: {{ recipe.date.strftime('%Y-%m-%d') }} </h5></label>
+    </div>
+    <div>
+        <input type="checkbox" id="add recipe box" name="{{ recipe.id }}" />
+        <label for="adding recipe">Add Recipe</label>
+    </div>
+    <br>
+{% endfor %}
+    <div class="form-example">
+    <input type="submit" value="submit" />
+    </div>
+</form>
+
+{% endblock %}

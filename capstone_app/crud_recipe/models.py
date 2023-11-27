@@ -11,7 +11,7 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 
-
+@dataclass
 class User(db.Model, UserMixin):
 
     # Create a table in the db
@@ -42,12 +42,12 @@ class Ingredient(db.Model):
     __tablename__ = 'ingredients'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)     ## are any validators/conditionals required here or are none needed?
+    name = db.Column(db.String(100), nullable=False)     ## are any validators/conditionals required here or are none needed?
 
     def __init__(self, name):
         self.name = name
 
-    def __repr__(self):    ## is the __repr__ function used for getting the data in the right form to be passed through functions?
+    def __repr__(self):  
         return f"id: {self.id} --- name: {self.name}"
 
     
@@ -59,7 +59,6 @@ class Ingredient(db.Model):
 @dataclass
 class Recipe(db.Model):
 
-    ## does recipes need a table? blogpost model in puppycompanyblog does not have one
     __tablename__ = 'recipes'
 
     id = db.Column(db.Integer(), primary_key=True)
@@ -72,23 +71,24 @@ class Recipe(db.Model):
         self.user_id = user_id
 
     def __repr__(self):
-        return f"id: {self.id} --- name: {self.name} --- user id: {self.date}"
+        return f"id: {self.id} --- name: {self.name} --- date: {self.date}"
 
     def to_dict(self):
         return {"id": self.id,
                 "name": self.name,
-                "user id": self.date}
+                "user id": self.date,
+                "date": self.date}
 
 
 #does my recipetoingredient model need this dataclass tag?
-# @dataclass
+@dataclass
 class RecipeToIngredient(db.Model):      
 
     __tablename__ = 'recipe_to_ingredient'
 
 
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), primary_key=True, nullable=False)
-    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredients.id'), primary_key=True, nullable=False)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), primary_key=True)
+    ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredients.id'), primary_key=True)
     ingredient_quantity = db.Column(db.Integer)
     ingredient_measurement = db.Column(db.String(50))
 
@@ -107,8 +107,8 @@ class RecipeToIngredient(db.Model):
     def to_dict(self):
         return {"recipe id": self.recipe_id,
                 "ingredient id": self.ingredient_id,
-                "ingredient_quantity": self.ingredient_quantity,
-                "ingredient_measurement": self.ingredient_measurement}
+                "ingredient quantity": self.ingredient_quantity,
+                "ingredient measurement": self.ingredient_measurement}
 
 
 

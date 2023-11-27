@@ -6,6 +6,12 @@ from werkzeug.security import generate_password_hash,check_password_hash
 from crud_recipe.models import User, Ingredient, Recipe, RecipeToIngredient
 from crud_recipe.users.forms import RegistrationForm, LoginForm, UpdateUserForm
 from flask.json import jsonify
+from crud_recipe.users.forms import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, TextAreaField, DateField, BooleanField
+from wtforms.validators import DataRequired, Email, EqualTo
+
+
+
 
 import pint
 from simple_test import test
@@ -21,9 +27,9 @@ from pint.errors import UndefinedUnitError
 
 
 
-users = Blueprint('users', __name__)
+user_views = Blueprint('users', __name__, url_prefix='/users')
 
-@users.route('/register', methods=['GET', 'POST'])
+@user_views.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
 
@@ -38,7 +44,7 @@ def register():
         return redirect(url_for('users.login'))
     return render_template('register.html', form=form)
 
-@users.route('/login', methods=['GET', 'POST'])
+@user_views.route('/login', methods=['GET', 'POST'])
 def login():
 
     form = LoginForm()
@@ -71,13 +77,13 @@ def login():
 
 
 
-@users.route("/logout")
+@user_views.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for('core.index'))
 
 
-@users.route("/account", methods=['GET', 'POST'])
+@user_views.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
 
@@ -116,18 +122,60 @@ def account():
 should a person be able to make multiple lists and view them from the view_shopping_lists view?  '''
 
 
-@users.route("/<username>")
+@user_views.route("/<username>")
 def view_users_recipes(username):
-    ## this should list each post with a date and a recipe title and show a date timestamp ##
+    
     user = User.query.filter_by(username=username).first_or_404()
     recipes = Recipe.query.filter_by(user_id=user.id).all()
 
-    # print(recipes)
-
-    for recipe in recipes:
-        print(recipe)
-
     return render_template('user_recipes.html', recipes=recipes,  user=user)
+
+
+@user_views.route("/<username>/generatelist", methods=['GET', 'POST'])
+def generate_shopping_list(username):
+
+    if request.method == 'GET': 
+   
+        user = User.query.filter_by(username=username).first_or_404()
+        recipes = Recipe.query.filter_by(user_id=user.id).order_by(Recipe.date.desc()).all()
+
+        return render_template('generate_shopping_list.html', recipes=recipes, current_user=user)
+
+    if request.method == 'POST':
+
+        form_items = request.form.items()
+
+        recipe_id_list = []
+
+        list_of_recipe_ingredients_lists = []
+
+        for k, v in form_items:
+            recipe_id = int(k)
+            recipe_id_list.append(recipe_id)
+
+        # need to find all ingredients in a recipe by id in recipe_id_list
+        for recipe_id in recipe_id_list:
+            recipe_ingredients_query = (
+                        db.session.query(Ingredient.name, RecipeToIngredient.ingredient_quantity, RecipeToIngredient.ingredient_measurement)
+                        .join(Ingredient, RecipeToIngredient.ingredient_id == Ingredient.id)
+                        .where(RecipeToIngredient.recipe_id == recipe_id)
+                        ).all()
+
+            list_of_recipe_ingredients_lists.append(recipe_ingredients_query)
+
+
+        shopping_list_ingredients = recipe_processor(list_of_recipe_ingredients_lists)
+
+        list_ingredients_to_list = list(shopping_list_ingredients)
+
+        for elem in list_ingredients_to_list:
+            print(type(elem))
+    
+
+        return render_template('new_shopping_list.html', shopping_list_ingredients=list_ingredients_to_list)
+
+    
+
 
 
 

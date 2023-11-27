@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 
+{{ title }}
+
+
+<h3> {{ message }} </h3>
+
+
 <form method="POST">
 
   {{form.hidden_tag()}}

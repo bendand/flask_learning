@@ -3,18 +3,25 @@
 <div class="jumbotron">
   <h1>{{ recipe_name }}</h1>
 
-  <h3>Submitted: {{ recipe.date.strftime('%B %d, %Y') }}</h3>
+  <h6>Submitted: {{ recipe.date.strftime('%B %d, %Y') }}</h6>
+<p>
+  <br>
+</p>
+<div>
+  <h3>Ingredients:</h3>
+</div>
 
-  <!-- need to iterate through ingredients in a recipe to display them here -->
-  <!-- {% for ingredient in recipe.ingredients %} -->
-
-
-  <!-- {% endfor %} -->
-
+<div>
+  {% for ingredient in recipe_ingredients %}
   <div>
-    <a class="btn btn-secondary" href="{{ url_for('recipes.update', recipe_id=recipe.id) }}">Update</a>
-    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#del_modal">Delete</button>
+  <h4>{{ ingredient[0] }} -- {{ ingredient[1] }} {{ ingredient[2] }}</h4>
   </div>
+  {% endfor %}
+</div>
+<div>
+  <a class="btn btn-secondary" href="{{ url_for('recipes.update', recipe_id=recipe.id) }}">Update</a>
+  <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#del_modal" href="{{ url_for('recipes.delete_recipe', recipe_id=recipe.id) }}">Delete</button>
+</div>
 
   <!-- how to iterate through the ingredients in a recipe? -->
 
@@ -49,3 +56,6 @@
   </div>
 
 {% endblock content %}
+
+
+

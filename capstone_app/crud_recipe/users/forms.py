@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, TextAreaField, DateField, BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo
 from wtforms import ValidationError
 ## user based imports 
@@ -48,6 +48,11 @@ class UpdateUserForm(FlaskForm):
         if user and user != current_user:
             raise ValidationError('This username is taken')
 
+
+
+
+
+    
 
 
 
