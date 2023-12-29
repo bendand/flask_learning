@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, Blueprint
 from flask_login import login_user, current_user, logout_user, login_required
 from crud_recipe import db
-from crud_recipe.mockup_function import recipe_processor
+from crud_recipe.reducer_function import recipe_reducer
 from werkzeug.security import generate_password_hash,check_password_hash
 from crud_recipe.models import User, Ingredient, Recipe, RecipeToIngredient
 from crud_recipe.users.forms import RegistrationForm, LoginForm, UpdateUserForm
@@ -9,7 +9,6 @@ from flask.json import jsonify
 from crud_recipe.users.forms import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, IntegerField, SelectField, TextAreaField, DateField, BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo
-
 
 
 
@@ -104,9 +103,6 @@ def account():
         return render_template('account.html', form=form)
 
 
-
-
-    
 # @users.route("/viewlist", methods=['GET'])
 # def view_list():
 
@@ -126,7 +122,7 @@ should a person be able to make multiple lists and view them from the view_shopp
 def view_users_recipes(username):
     
     user = User.query.filter_by(username=username).first_or_404()
-    recipes = Recipe.query.filter_by(user_id=user.id).all()
+    recipes = Recipe.query.filter_by(user_id=user.id).order_by(Recipe.date.desc()).all()
 
     return render_template('user_recipes.html', recipes=recipes,  user=user)
 
@@ -147,35 +143,25 @@ def generate_shopping_list(username):
 
         recipe_id_list = []
 
-        list_of_recipe_ingredients_lists = []
-
         for k, v in form_items:
             recipe_id = int(k)
             recipe_id_list.append(recipe_id)
 
-        # need to find all ingredients in a recipe by id in recipe_id_list
-        for recipe_id in recipe_id_list:
-            recipe_ingredients_query = (
-                        db.session.query(Ingredient.name, RecipeToIngredient.ingredient_quantity, RecipeToIngredient.ingredient_measurement)
-                        .join(Ingredient, RecipeToIngredient.ingredient_id == Ingredient.id)
-                        .where(RecipeToIngredient.recipe_id == recipe_id)
-                        ).all()
+        # finds all ingredients from a list of recipe ids
+        recipe_ingredients_result = (
+                    db.session.query(Ingredient.name, RecipeToIngredient.ingredient_quantity, RecipeToIngredient.ingredient_measurement)
+                    .join(Ingredient, RecipeToIngredient.ingredient_id == Ingredient.id)
+                    .where(RecipeToIngredient.recipe_id.in_(recipe_id_list))
+                    ).all()
+        
 
-            list_of_recipe_ingredients_lists.append(recipe_ingredients_query)
+        # variable holds the returned result of our reducer function 
+        shopping_list_ingredients = recipe_reducer(recipe_ingredients_result)
 
-
-        shopping_list_ingredients = recipe_processor(list_of_recipe_ingredients_lists)
-
-        list_ingredients_to_list = list(shopping_list_ingredients)
-
-        for elem in list_ingredients_to_list:
-            print(type(elem))
-    
-
-        return render_template('new_shopping_list.html', shopping_list_ingredients=list_ingredients_to_list)
-
-    
-
+        # sorting our items alphabetically
+        sorted_ingredients = sorted(shopping_list_ingredients)
+ 
+        return render_template('new_shopping_list.html', shopping_list_ingredients=sorted_ingredients)
 
 
 

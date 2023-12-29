@@ -1,10 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 
-{{ title }}
+<b>{{ title }}</b>
 
+{% if errors %}
+  {% for error, line_nums in errors %}
 
-<h3> {{ message }} </h3>
+    {% if error == 'tuple length' %}
+      <h6><i>*your ingredients on lines: {{ line_nums }} don't meet our length requirements. make sure you add a comma
+        and a space between each ingredient attribute and line return after each ingredient.</i></h6>
+    {% endif %}
+    {% if error == 'quantity value' %}
+      <h6><i>*your second entry on lines: {{ line_nums }} could not be converted to numbers</i></h6>
+    {% endif %}
+    {% if error == 'invalid measurement' %}
+      <h6><i>*your measurements on lines: {{ line_nums }} are invalid. if your items do not have a volume or mass measurement,
+        'count' may be used</i></h6>
+    {% endif %}
+    {% if error == 'duplicated ingredients' %}
+      <h6><i>*your ingredients on lines: {{ line_nums }} have been entered more than once in this recipe</i></h6>
+    {% endif %}
+
+  {% endfor %}
+{% endif %}
+
+{% if success_message %}
+  <h6><b>{{ success_message }}</b></h6>
+{% endif %}
+
 
 
 <form method="POST">

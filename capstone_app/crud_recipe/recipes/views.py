@@ -5,7 +5,7 @@ from crud_recipe.models import Ingredient,Recipe,RecipeToIngredient,User
 from crud_recipe.recipes.forms import RecipeForm
 import datetime
 from sqlalchemy import select,delete
-from pint import UnitRegistry
+from pint import UnitRegistry, DimensionalityError
 
 recipe_views = Blueprint('recipes',__name__, url_prefix='/recipes')
 
@@ -17,95 +17,114 @@ def add_recipe():
     recipe_form = RecipeForm()
     title = 'Adding a Recipe'
 
-    if recipe_form.validate_on_submit():
+    if not recipe_form.validate_on_submit():
 
-        recipe_name = recipe_form.recipe_name.data
+        return render_template('enter_recipe.html', form=recipe_form, title=title)
 
-        new_recipe = Recipe(name=recipe_name, user_id=current_user.id)
 
-        # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
-        recipe_data = recipe_form.enter_ingredients.data.splitlines()
+    recipe_name = recipe_form.recipe_name.data
 
-        # splits into 3 items per line, no whitespace, with a comma separating each value
-        recipe_items = [item.split(', ') for item in recipe_data]
+    new_recipe = Recipe(name=recipe_name, user_id=current_user.id)
 
-        # converts each item in the list into a tuple
-        new_recipe_items = [tuple(item) for item in recipe_items]
+    # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
+    recipe_data = recipe_form.enter_ingredients.data.splitlines()
 
-        #establishes some instances/variables so we can check to see if the user is inputting valid measurements
+    # initialize our validation error message dictionary
+    errors = {}
+    # repository for clean ingredients
+    clean_ingredients = {}
+
+    for line_num, line in enumerate(recipe_data):
+        
+        raw_ingredient = line.split(', ')
+        if len(raw_ingredient) != 3:
+            if "tuple length" in errors:
+                errors["tuple length"] += ', ' +  str(line_num + 1)
+            else:
+                errors["tuple length"] = str(line_num + 1)
+            continue
+
+        name = raw_ingredient[0].strip() 
+        quantity = raw_ingredient[1].strip() 
+        measure = raw_ingredient[2].strip()
         ureg = UnitRegistry()
-        ureg_offenders = []
-        not_in_registry = 0
 
-        # checks for belonging in our registry
-        for item in new_recipe_items:
+        # initializes our validation error to False
+        validation_error = False
 
-            measurement = item[2]
+        try:
+            quantity_float = float(quantity)
+        except:
+            validation_error = True
+            if "quantity value" in errors:
+                errors["quantity value"] += ', ' + str(line_num + 1)
+            else:
+                errors["quantity value"] = str(line_num + 1)
 
-            if measurement not in ureg:
+        try:
+            ureg(measure)
+        except:
+            validation_error = True
+            if "invalid measurement" in errors:
+                errors["invalid measurement"] += ', ' + str(line_num + 1)
+            else:
+                errors["invalid measurement"] = str(line_num + 1)
 
-                ureg_offenders.append(measurement)
-                not_in_registry += 1
 
-        # if we have one instance of unbelonging we redirect the user to a blank form with an error message
-        if not_in_registry > 0:
+        if name in clean_ingredients:
+            validation_error = True
+            if "duplicated ingredients" in errors:
+                errors["duplicated ingredients"] += ', ' + str(line_num + 1)
+            else:
+                errors["duplicated ingredients"] = str(line_num + 1)
+            
+        if validation_error:
+            continue
+        
+        clean_ingredients[name] = (quantity_float, measure)
 
-            message = 'your units of measure: ' + str(ureg_offenders) + ' are invalid'
-            return(render_template('enter_recipe.html', form=recipe_form, message=message))
+    print(clean_ingredients)
 
-        else:
+    if errors:
+        return render_template('enter_recipe.html', form=recipe_form, errors=errors.items())
 
-            # we add and commit our recipe knowing now that our units of measurent work
-            db.session.add(new_recipe)
+    
+
+    # we add and commit our recipe knowing now that our points of validation check out
+    db.session.add(new_recipe)
+    db.session.commit()
+
+
+    for ingredient_name, quantity_measurement in clean_ingredients.items():
+        
+        ingredient_quantity = quantity_measurement[0]
+        ingredient_measurement = quantity_measurement[1]
+    
+        # produces a name or a none value in this variable
+        ingredient = Ingredient.query.filter_by(name=ingredient_name).first()
+
+        # if the ingredient is not in the ingredient table...
+        if not ingredient:
+
+            # create an instance of ingredient and commit 
+            ingredient = Ingredient(name=ingredient_name)
+
+            db.session.add(ingredient)
             db.session.commit()
 
-            for item in new_recipe_items:
+        # this then needs to be done regardless of whether or not the ingredient has been added to our database before
+        recipe_to_ingredient = RecipeToIngredient(recipe_id=new_recipe.id,
+                                                ingredient_id=ingredient.id, 
+                                                ingredient_quantity=ingredient_quantity, 
+                                                ingredient_measurement=ingredient_measurement)
 
-                # establishes convenient names for our indexed values
-                item_name = item[0]
-                item_quantity = float(item[1])
-                item_measurement = item[2]
+        db.session.add(recipe_to_ingredient)
+        db.session.commit()
+        
 
-                # produces a name or a none value in this variable
-                in_database = Ingredient.query.filter_by(name=item_name).first()
+    success_message = 'your recipe, ' + recipe_name + ', was added!'
+    return render_template('enter_recipe.html', form=recipe_form, success_message=success_message)
 
-                # if the ingredient is not in the ingredient table...
-                if in_database == None:
-
-                    # create an instance of ingredient and commit 
-                    new_ingredient = Ingredient(name=item_name)
-
-                    db.session.add(new_ingredient)
-                    db.session.commit()
-
-                    # then save the ingredient as a record in the recipe to ingredient table
-                    recipe_to_ingredient = RecipeToIngredient(recipe_id=new_recipe.id,
-                                                            ingredient_id=new_ingredient.id, 
-                                                            ingredient_quantity=item_quantity, 
-                                                            ingredient_measurement=item_measurement)
-
-                    db.session.add(recipe_to_ingredient)
-                    db.session.commit()
-
-                # if the ingredient name is already in the ingredient table...
-                else:
-
-                    ingredient_in_database = Ingredient.query.filter_by(name=item_name).first()
-
-                    recipe_to_ingredient = RecipeToIngredient(recipe_id=new_recipe.id, 
-                                                            ingredient_id=ingredient_in_database.id,
-                                                            ingredient_quantity=item_quantity,
-                                                            ingredient_measurement=item_measurement)
-
-                    db.session.add(recipe_to_ingredient)
-                    db.session.commit()
-
-            message = 'your recipe, ' + recipe_name + ', was added!'
-            return render_template('enter_recipe.html', form=recipe_form, message=message)
-                # should i flash a two-button form that asks the user if they want to either enter another recipe or 'go to my recipes'?
-                # return redirect(url_for('recipes.add_recipe')
-
-    return render_template('enter_recipe.html', form=recipe_form, title=title)
 
 @recipe_views.route("/generatelist/<username>")
 def generate_shopping_list(username):
@@ -113,10 +132,7 @@ def generate_shopping_list(username):
     user = User.query.filter_by(username=username).first_or_404()
     recipes = Recipe.query.filter_by(user_id=user.id).all()
 
-    # print(recipes)
-
     return render_template('generate_shopping_list.html', recipes=recipes)
-
 
 
 
@@ -140,115 +156,130 @@ def recipe_view(recipe_id):
 @recipe_views.route("/<int:recipe_id>/update", methods=['GET', 'POST'])
 @login_required
 def update(recipe_id):
-    old_recipe = Recipe.query.get_or_404(recipe_id)
 
+    old_recipe = Recipe.query.get_or_404(recipe_id)
     update_recipe_form = RecipeForm()
     title = 'Update Recipe'
 
-    if update_recipe_form.validate_on_submit():
+    if not update_recipe_form.validate_on_submit():
+        
+        update_recipe_form.recipe_name.data = old_recipe.name
 
-        recipe_name = update_recipe_form.recipe_name.data
+        return render_template('enter_recipe.html', form=update_recipe_form, title=title, recipe_name=update_recipe_form.recipe_name.data)
 
-        updated_recipe = Recipe(name=recipe_name, user_id=current_user.id)
+    # initialize our validation error message dictionary with none values
+    error_dict = {"tuple_length_error_message": None, "quantity_type_error_message": None, 
+                  "measurement_error_message": None, "duplicated_items_error_message": None}
 
-        # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
-        recipe_data = update_recipe_form.enter_ingredients.data.splitlines()
+    recipe_name = update_recipe_form.recipe_name.data
 
-        # splits into 3 items per line, no whitespace, with a comma separating each value
-        recipe_items = [item.split(', ') for item in recipe_data]
+    updated_recipe = Recipe(name=recipe_name, user_id=current_user.id)
 
-        # converts each item in the list into a tuple
-        new_recipe_items = [tuple(item) for item in recipe_items]
+    # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
+    recipe_data = update_recipe_form.enter_ingredients.data.splitlines()
 
-        #establishes some instances/variables so we can check to see if the user is inputting valid measurements
+    # initialize our validation error message dictionary
+    errors = {}
+    # repository for clean ingredients
+    clean_ingredients = {}
+    
+    for line_num, line in enumerate(recipe_data):
+        
+        raw_ingredient = line.split(', ')
+        if len(raw_ingredient) != 3:
+            if "tuple length" in errors:
+                errors["tuple length"] += ', ' +  str(line_num + 1)
+            else:
+                errors["tuple length"] = str(line_num + 1)
+            continue
+
+        name = raw_ingredient[0].strip() 
+        quantity = raw_ingredient[1].strip() 
+        measure = raw_ingredient[2].strip()
         ureg = UnitRegistry()
-        ureg_offenders = []
-        not_in_registry = 0
 
-        # checks for belonging in our registry
-        for item in new_recipe_items:
+        # initializes our validation error to False
+        validation_error = False
 
-            measurement = item[2]
+        try:
+            quantity_float = float(quantity)
+        except:
+            validation_error = True
+            if "quantity value" in errors:
+                errors["quantity value"] += ', ' + str(line_num + 1)
+            else:
+                errors["quantity value"] = str(line_num + 1)
 
-            if measurement not in ureg:
+        try:
+            ureg(measure)
+        except:
+            validation_error = True
+            if "invalid measurement" in errors:
+                errors["invalid measurement"] += ', ' + str(line_num + 1)
+            else:
+                errors["invalid measurement"] = str(line_num + 1)
 
-                ureg_offenders.append(measurement)
-                not_in_registry += 1
 
-        # if we have one instance of unbelonging we redirect the user to a blank form with an error message
-        if not_in_registry > 0:
+        if name in clean_ingredients:
+            validation_error = True
+            if "duplicated ingredients" in errors:
+                errors["duplicated ingredients"] += ', ' + str(line_num + 1)
+            else:
+                errors["duplicated ingredients"] = str(line_num + 1)
+            
+        if validation_error:
+            continue
+        
+        clean_ingredients[name] = (quantity_float, measure)
 
-            message = 'your units of measure: ' + str(ureg_offenders) + ' are invalid'
-            return(render_template('enter_recipe.html', form=update_recipe_form, message=message))
+    if errors:
+            return render_template('enter_recipe.html', form=update_recipe_form, errors=errors.items())
+            
+    # deletes our old recipe and all of our ingredients that are linked to the old recipe
+    db.session.delete(old_recipe)
+    delete_old_ingredients_stmt = delete(RecipeToIngredient).where(RecipeToIngredient.recipe_id==old_recipe.id)
+    db.session.execute(delete_old_ingredients_stmt)
 
-        else:
+    # now we add and commit the new one
+    db.session.add(updated_recipe)
+    db.session.commit()
 
-            # we add and commit our recipe knowing now that our units of measurent work
-            # should we delete the old recipe like written below?
-            db.session.delete(old_recipe)
-            db.session.add(updated_recipe)
+    for ingredient_name, quantity_measurement in clean_ingredients.items():
+        
+        ingredient_quantity = quantity_measurement[0]
+        ingredient_measurement = quantity_measurement[1]
+    
+        # produces a name or a none value in this variable
+        ingredient = Ingredient.query.filter_by(name=ingredient_name).first()
 
+        # if the ingredient is not in the ingredient table...
+        if not ingredient:
+
+            # create an instance of ingredient and commit 
+            ingredient = Ingredient(name=ingredient_name)
+
+            db.session.add(ingredient)
             db.session.commit()
 
-            for item in new_recipe_items:
+        # this then needs to be done regardless of whether or not the ingredient has been added to our database before
+        recipe_to_ingredient = RecipeToIngredient(recipe_id=updated_recipe.id,
+                                                ingredient_id=ingredient.id, 
+                                                ingredient_quantity=ingredient_quantity, 
+                                                ingredient_measurement=ingredient_measurement)
 
-                # establishes convenient names for our indexed values
-                item_name = item[0]
-                item_quantity = float(item[1])
-                item_measurement = item[2]
-
-                # produces a name or a none value in this variable
-                in_database = Ingredient.query.filter_by(name=item_name).first()
-
-                # if the ingredient is not in the ingredient table...
-                if in_database == None:
-
-                    # create an instance of ingredient and commit 
-                    new_ingredient = Ingredient(name=item_name)
-
-                    db.session.add(new_ingredient)
-                    db.session.commit()
-
-                    # then save the ingredient as a record in the recipe to ingredient table
-                    recipe_to_ingredient = RecipeToIngredient(recipe_id=updated_recipe.id,
-                                                            ingredient_id=new_ingredient.id, 
-                                                            ingredient_quantity=item_quantity, 
-                                                            ingredient_measurement=item_measurement)
-
-                    db.session.add(recipe_to_ingredient)
-                    db.session.commit()
-
-                # if the ingredient name is already in the ingredient table...
-                else:
-
-                    ingredient_in_database = Ingredient.query.filter_by(name=item_name).first()
-
-                    recipe_to_ingredient = RecipeToIngredient(recipe_id=updated_recipe.id, 
-                                                            ingredient_id=ingredient_in_database.id,
-                                                            ingredient_quantity=item_quantity,
-                                                            ingredient_measurement=item_measurement)
-
-                    db.session.add(recipe_to_ingredient)
-                    db.session.commit()
-
-            message = 'your recipe, ' + recipe_name + ', was updated!'
-
+        db.session.add(recipe_to_ingredient)
         db.session.commit()
-        flash('Recipe Updated')
-        return redirect(url_for('recipe_views.recipe_view', recipe_id=updated_recipe.id))
-    # Pass back the old recipe information so they can start again with
-    # the old text and title.
-    elif request.method == 'GET':
-        update_recipe_form.recipe_name.data = old_recipe.name
-    return render_template('enter_recipe.html', title=title,
-                           form=update_recipe_form)
+
+    success_message = 'your recipe, ' + recipe_name + ', was updated!'
+    return render_template('enter_recipe.html', form=update_recipe_form, success_message=success_message)
+    
 
 
 @recipe_views.route("/<int:recipe_id>/delete", methods=['POST'])
 @login_required
 def delete_recipe(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
-    #needs here to also delete ingredients linked to the recipe id 
+
     delete_recipe_stmt = delete(Recipe).where(Recipe.id == recipe.id)
     delete_recipe_ingredients_stmt = delete(RecipeToIngredient).where(RecipeToIngredient.recipe_id == recipe.id)
     
@@ -259,5 +290,5 @@ def delete_recipe(recipe_id):
     updated_user_recipes = Recipe.query.filter_by(user_id=current_user.id).all()
 
     message = 'Recipe deleted'
-    # need to figure out how to pass in this message
+
     return render_template('user_recipes.html', message=message, user=current_user, recipes=updated_user_recipes)

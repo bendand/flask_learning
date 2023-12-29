@@ -2,29 +2,11 @@
 
 {% block content %}
 
-<h3>shopping list</h3>
+<h3><b> shopping list </b></h3>
 
-{% for elem in shopping_list_ingredients %}
+{% for name, quantity in shopping_list_ingredients %}
 
-    {% if elem.__class__.__name__ == "dict" %}
-    
-        {% for key, value in elem.items() %}
-
-            <h5> {{ key }} - {{ value }} </h5> 
-        
-        {% endfor %}
-    
-    {% else %}
-
-        {% for item in elem %}
-
-            <h5> {{ item[0] }} - {{ item[1] }} {{ item[2] }} </h5>
-            <br>
-
-        {% endfor %}
-
-    {% endif %}
-
+    <h5>{{ name[0] }} - {{ quantity }}</h5>
 
 {% endfor %}
 

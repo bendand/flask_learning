@@ -9,6 +9,8 @@ from wtforms import ValidationError
 class RecipeForm(FlaskForm):
 
     recipe_name = StringField('Recipe Name', validators=[DataRequired()])
-    enter_ingredients = TextAreaField('Enter the ingredient, the quantity, and the measurement, with each value separated by a comma. Ex: "rice, 1, cup"', validators=[DataRequired()])
+    enter_ingredients = TextAreaField("""Enter the ingredient, the quantity, and the measurement, with each value
+                                         separated by a comma. Ex: "rice, 1, cup". For non-whole numbers, use integers with decimals 
+                                         instead of fractions. Do not enter an ingredient name more than once.""", validators=[DataRequired()])
 
     enter_recipe = SubmitField('Submit All Ingredients')
