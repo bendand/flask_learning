@@ -83,7 +83,6 @@ def add_recipe():
         
         clean_ingredients[name] = (quantity_float, measure)
 
-    print(clean_ingredients)
 
     if errors:
         return render_template('enter_recipe.html', form=recipe_form, errors=errors.items())

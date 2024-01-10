@@ -4,9 +4,9 @@
 
 <h3><b> shopping list </b></h3>
 
-{% for name, quantity in shopping_list_ingredients %}
+{% for ingredient in shopping_list_ingredients %}
 
-    <h5>{{ name[0] }} - {{ quantity }}</h5>
+    <h5>{{ ingredient[0] }} - {{ ingredient[1] }} {{ ingredient[2] }}</h5>
 
 {% endfor %}
 
