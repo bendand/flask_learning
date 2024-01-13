@@ -6,6 +6,9 @@ from crud_recipe.recipes.forms import RecipeForm
 import datetime
 from sqlalchemy import select,delete
 from pint import UnitRegistry, DimensionalityError
+from crud_recipe.validate_recipe_form import ValidationError,validate_add_recipe_form
+
+
 
 recipe_views = Blueprint('recipes',__name__, url_prefix='/recipes')
 
@@ -29,70 +32,14 @@ def add_recipe():
     # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
     recipe_data = recipe_form.enter_ingredients.data.splitlines()
 
-    # initialize our validation error message dictionary
-    errors = {}
-    # repository for clean ingredients
-    clean_ingredients = {}
-
-    for line_num, line in enumerate(recipe_data):
-        
-        raw_ingredient = line.split(', ')
-        if len(raw_ingredient) != 3:
-            if "tuple length" in errors:
-                errors["tuple length"] += ', ' +  str(line_num + 1)
-            else:
-                errors["tuple length"] = str(line_num + 1)
-            continue
-
-        name = raw_ingredient[0].strip() 
-        quantity = raw_ingredient[1].strip() 
-        measure = raw_ingredient[2].strip()
-        ureg = UnitRegistry()
-
-        # initializes our validation error to False
-        validation_error = False
-
-        try:
-            quantity_float = float(quantity)
-        except:
-            validation_error = True
-            if "quantity value" in errors:
-                errors["quantity value"] += ', ' + str(line_num + 1)
-            else:
-                errors["quantity value"] = str(line_num + 1)
-
-        try:
-            ureg(measure)
-        except:
-            validation_error = True
-            if "invalid measurement" in errors:
-                errors["invalid measurement"] += ', ' + str(line_num + 1)
-            else:
-                errors["invalid measurement"] = str(line_num + 1)
-
-
-        if name in clean_ingredients:
-            validation_error = True
-            if "duplicated ingredients" in errors:
-                errors["duplicated ingredients"] += ', ' + str(line_num + 1)
-            else:
-                errors["duplicated ingredients"] = str(line_num + 1)
-            
-        if validation_error:
-            continue
-        
-        clean_ingredients[name] = (quantity_float, measure)
-
-
-    if errors:
-        return render_template('enter_recipe.html', form=recipe_form, errors=errors.items())
-
-    
+    try:
+        clean_ingredients = validate_add_recipe_form(recipe_data)
+    except ValidationError as error:
+        return render_template("enter_recipe.html", form=recipe_form, errors=error.errors)
 
     # we add and commit our recipe knowing now that our points of validation check out
     db.session.add(new_recipe)
     db.session.commit()
-
 
     for ingredient_name, quantity_measurement in clean_ingredients.items():
         
@@ -123,6 +70,10 @@ def add_recipe():
 
     success_message = 'your recipe, ' + recipe_name + ', was added!'
     return render_template('enter_recipe.html', form=recipe_form, success_message=success_message)
+
+
+
+
 
 
 @recipe_views.route("/generatelist/<username>")
@@ -161,14 +112,8 @@ def update(recipe_id):
     title = 'Update Recipe'
 
     if not update_recipe_form.validate_on_submit():
-        
         update_recipe_form.recipe_name.data = old_recipe.name
-
         return render_template('enter_recipe.html', form=update_recipe_form, title=title, recipe_name=update_recipe_form.recipe_name.data)
-
-    # initialize our validation error message dictionary with none values
-    error_dict = {"tuple_length_error_message": None, "quantity_type_error_message": None, 
-                  "measurement_error_message": None, "duplicated_items_error_message": None}
 
     recipe_name = update_recipe_form.recipe_name.data
 
@@ -177,62 +122,10 @@ def update(recipe_id):
     # grabs the data from the enter ingredients field, splits it into lines, and makes it moldable
     recipe_data = update_recipe_form.enter_ingredients.data.splitlines()
 
-    # initialize our validation error message dictionary
-    errors = {}
-    # repository for clean ingredients
-    clean_ingredients = {}
-    
-    for line_num, line in enumerate(recipe_data):
-        
-        raw_ingredient = line.split(', ')
-        if len(raw_ingredient) != 3:
-            if "tuple length" in errors:
-                errors["tuple length"] += ', ' +  str(line_num + 1)
-            else:
-                errors["tuple length"] = str(line_num + 1)
-            continue
-
-        name = raw_ingredient[0].strip() 
-        quantity = raw_ingredient[1].strip() 
-        measure = raw_ingredient[2].strip()
-        ureg = UnitRegistry()
-
-        # initializes our validation error to False
-        validation_error = False
-
-        try:
-            quantity_float = float(quantity)
-        except:
-            validation_error = True
-            if "quantity value" in errors:
-                errors["quantity value"] += ', ' + str(line_num + 1)
-            else:
-                errors["quantity value"] = str(line_num + 1)
-
-        try:
-            ureg(measure)
-        except:
-            validation_error = True
-            if "invalid measurement" in errors:
-                errors["invalid measurement"] += ', ' + str(line_num + 1)
-            else:
-                errors["invalid measurement"] = str(line_num + 1)
-
-
-        if name in clean_ingredients:
-            validation_error = True
-            if "duplicated ingredients" in errors:
-                errors["duplicated ingredients"] += ', ' + str(line_num + 1)
-            else:
-                errors["duplicated ingredients"] = str(line_num + 1)
-            
-        if validation_error:
-            continue
-        
-        clean_ingredients[name] = (quantity_float, measure)
-
-    if errors:
-            return render_template('enter_recipe.html', form=update_recipe_form, errors=errors.items())
+    try:
+        clean_ingredients = validate_add_recipe_form(recipe_data)
+    except ValidationError as error:
+        return render_template("enter_recipe.html", form=update_recipe_form, errors=error.errors)
             
     # deletes our old recipe and all of our ingredients that are linked to the old recipe
     db.session.delete(old_recipe)

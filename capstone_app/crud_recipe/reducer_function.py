@@ -27,10 +27,12 @@ def recipe_reducer(list_of_ingredients):
             ingredient_dict[name_and_dimension] += quantity_msmt
         else:
             ingredient_dict[name_and_dimension] = quantity_msmt
+    
+    final_ingredient_list = []
 
-    # this comprehension gets rid of out quantity object and loads everything back into a list of normal tuples
-    final_ingredient_list = [(ingredient[0], float(measurement.magnitude), str(measurement.units))
-                             for ingredient, measurement in ingredient_dict.items()]
+    for ingredient, measurement in ingredient_dict.items():
+        new_tuple = (ingredient[0], float(measurement.magnitude), str(measurement.units))
+        final_ingredient_list.append(new_tuple)
 
     return final_ingredient_list
 

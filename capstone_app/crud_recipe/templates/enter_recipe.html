@@ -4,7 +4,8 @@
 <b>{{ title }}</b>
 
 {% if errors %}
-  {% for error, line_nums in errors %}
+
+  {% for error, line_nums in errors.items() %}
 
     {% if error == 'tuple length' %}
       <h6><i>*your ingredients on lines: {{ line_nums }} don't meet our length requirements. make sure you add a comma
